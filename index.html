@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Internship Test Module - Slide Wizard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6fa; color: #222; }
+    .slide-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #f4f6fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .slide {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #fff;
+      box-shadow: 0 2px 12px #0001;
+      border-radius: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: translateX(100vw);
+      transition: all 0.5s cubic-bezier(.77,0,.18,1);
+      z-index: 1;
+    }
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0);
+      z-index: 2;
+    }
+    .slide.left {
+      opacity: 0;
+      transform: translateX(-100vw);
+      z-index: 1;
+    }
+    .slide-content {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px #0002;
+      padding: 36px 28px;
+      min-height: 420px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    h2 { margin-bottom: 18px; }
+    .input-group { margin-bottom: 16px; width: 100%; }
+    label { display: block; margin-bottom: 6px; font-weight: 500; }
+    input, select { width: 100%; padding: 8px; border: 1px solid #bbb; border-radius: 4px; margin-bottom: 6px; }
+    .btn { background: #1976d2; color: #fff; border: none; padding: 10px 22px; border-radius: 5px; cursor: pointer; font-size: 1rem; transition: background 0.2s; margin: 8px 4px; }
+    .btn:hover { background: #1256a3; }
+    .btn-outline { background: #fff; color: #1976d2; border: 1px solid #1976d2; }
+    .error { color: #d32f2f; margin-bottom: 10px; }
+    .success { color: #388e3c; margin-bottom: 10px; }
+    .center { text-align: center; }
+    .question { margin-bottom: 18px; }
+    .option { display: block; margin-bottom: 8px; }
+    .timer { font-weight: bold; color: #d32f2f; }
+    .score { font-size: 1.2em; font-weight: bold; }
+    .attempts { color: #888; font-size: 0.95em; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.9em; margin-right: 4px; }
+    .tag.easy { background: #e3fbe3; color: #2e7d32; }
+    .tag.moderate { background: #fffbe3; color: #bfa100; }
+    .tag.hard { background: #fde3e3; color: #c62828; }
+    .slide-nav {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 24px;
+    }
+    .slide-dots {
+      display: flex;
+      justify-content: center;
+      margin-top: 18px;
+      gap: 8px;
+    }
+    .dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #bbb;
+      transition: background 0.2s;
+    }
+    .dot.active { background: #1976d2; }
+    .camera { display: flex; flex-direction: column; align-items: center; }
+    video, canvas { border-radius: 8px; margin-bottom: 10px; }
+    .table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    .table th, .table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    .table th { background: #f0f0f0; }
+    @media (max-width: 700px) {
+      .slide-content { padding: 16px 2vw; min-height: 340px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <!-- Slide 0: Applicant Login -->
+    <div class="slide active" id="slide-0">
+      <div class="slide-content">
+        <h2>Applicant Login</h2>
+        <div class="input-group">
+          <label for="login-mobile">Mobile Number</label>
+          <input type="tel" id="login-mobile" maxlength="10" placeholder="Enter your 10-digit mobile number">
+        </div>
+        <button class="btn" id="btn-send-otp">Send OTP</button>
+        <div id="otp-section" class="hidden mt">
+          <div class="input-group">
+            <label for="login-otp">Enter OTP</label>
+            <input type="text" id="login-otp" maxlength="6" placeholder="Enter OTP">
+          </div>
+          <button class="btn" id="btn-verify-otp">Verify OTP</button>
+        </div>
+        <div id="login-error" class="error"></div>
+        <div class="slide-nav">
+          <span></span>
+          <button class="btn" id="to-admin-login">Admin Login</button>
+        </div>
+      </div>
+    </div>
+    <!-- Slide 1: Profile -->
+    <div class="slide" id="slide-1">
+      <div class="slide-content">
+        <h2>Profile Information</h2>
+        <form id="profile-form">
+          <div class="input-group">
+            <label for="profile-name">Full Name</label>
+            <input type="text" id="profile-name" required>
+          </div>
+          <div class="input-group">
+            <label for="profile-email">Email</label>
+            <input type="email" id="profile-email" required>
+          </div>
+          <div class="input-group">
+            <label for="profile-photo">Photo (optional)</label>
+            <input type="file" id="profile-photo" accept="image/*">
+          </div>
+          <div class="slide-nav">
+            <button class="btn btn-outline" type="button" id="back-to-login">Back</button>
+            <button class="btn" type="submit">Next</button>
+          </div>
+        </form>
+        <div id="profile-error" class="error"></div>
+      </div>
+    </div>
+    <!-- Slide 2: Terms -->
+    <div class="slide" id="slide-2">
+      <div class="slide-content">
+        <h2>Terms & Conditions</h2>
+        <div style="max-height: 180px; overflow-y: auto; border: 1px solid #eee; padding: 12px; border-radius: 6px; background: #fafbfc; margin-bottom: 12px; font-size: 0.98em;">
+          <ul style="padding-left: 18px;">
+            <li>The test duration is 30 minutes. You have a maximum of 5 attempts.</li>
+            <li>Each correct answer awards 3 marks. Each wrong answer deducts 1 mark.</li>
+            <li>Camera access is required for proctoring. Your photo will be captured before the test.</li>
+            <li>Questions are randomly selected by difficulty (30% moderate, 40% hard, 30% easy).</li>
+            <li>Passing marks: 65%. Only passed students are eligible for the interview round.</li>
+            <li>Do not refresh or close the browser during the test.</li>
+            <li>By starting the test, you agree to all terms and conditions.</li>
+            <li>Your data is stored locally and not shared with third parties.</li>
+          </ul>
+        </div>
+        <label><input type="checkbox" id="accept-terms"> I accept the terms and conditions</label>
+        <div class="slide-nav">
+          <button class="btn btn-outline" id="back-to-profile">Back</button>
+          <button class="btn" id="btn-accept-terms" disabled>Next</button>
+        </div>
+      </div>
+    </div>
+    <!-- Slide 3: Camera -->
+    <div class="slide" id="slide-3">
+      <div class="slide-content">
+        <h2>Camera Check</h2>
+        <div class="camera">
+          <video id="camera-video" width="220" height="160" autoplay></video>
+          <canvas id="camera-canvas" width="220" height="160" class="hidden"></canvas>
+          <button class="btn" id="btn-capture-photo">Capture Photo</button>
+        </div>
+        <div id="camera-error" class="error"></div>
+        <div class="slide-nav">
+          <button class="btn btn-outline" id="back-to-terms">Back</button>
+          <span></span>
+        </div>
+      </div>
+    </div>
+    <!-- Slide 4: Test -->
+    <div class="slide" id="slide-4">
+      <div class="slide-content">
+        <div class="center mb">
+          <span class="timer" id="test-timer">30:00</span> | <span class="attempts" id="test-attempts"></span>
+        </div>
+        <div id="test-question"></div>
+        <div id="test-options"></div>
+        <div class="slide-nav">
+          <button class="btn btn-outline" id="back-to-camera">Back</button>
+          <span>
+            <button class="btn" id="btn-next-question">Next</button>
+            <button class="btn" id="btn-submit-test" style="display:none;">Submit Test</button>
+          </span>
+        </div>
+      </div>
+    </div>
+    <!-- Slide 5: Result -->
+    <div class="slide" id="slide-5">
+      <div class="slide-content">
+        <h2>Test Result</h2>
+        <div class="score" id="result-score"></div>
+        <div id="result-status"></div>
+        <div id="result-details"></div>
+        <div class="slide-nav">
+          <span></span>
+          <button class="btn" id="btn-new-attempt">New Attempt</button>
+        </div>
+      </div>
+    </div>
+    <!-- Slide 6: Achievements -->
+    <div class="slide" id="slide-6">
+      <div class="slide-content center">
+        <h2>Achievements</h2>
+        <p>Congratulations on your progress!</p>
+        <button class="btn" id="btn-contact">Contact</button>
+      </div>
+    </div>
+    <!-- Slide 7: Admin Login -->
+    <div class="slide" id="slide-7">
+      <div class="slide-content">
+        <h2>Admin Login</h2>
+        <div class="input-group">
+          <label for="admin-mobile">Mobile Number</label>
+          <input type="tel" id="admin-mobile" maxlength="10" placeholder="Enter admin mobile number">
+        </div>
+        <button class="btn" id="btn-admin-send-otp">Send OTP</button>
+        <div id="admin-otp-section" class="hidden mt">
+          <div class="input-group">
+            <label for="admin-otp">Enter OTP</label>
+            <input type="text" id="admin-otp" maxlength="6" placeholder="Enter OTP">
+          </div>
+          <button class="btn" id="btn-admin-verify-otp">Verify OTP</button>
+        </div>
+        <div id="admin-login-error" class="error"></div>
+        <div class="slide-nav">
+          <button class="btn btn-outline" id="back-to-login-from-admin">Back</button>
+          <span></span>
+        </div>
+      </div>
+    </div>
+    <!-- Slide 8: Admin Panel -->
+    <div class="slide" id="slide-8">
+      <div class="slide-content">
+        <h2>Admin Panel</h2>
+        <div class="admin-section">
+          <h3>Test Configuration</h3>
+          <form id="admin-config-form">
+            <div class="input-group">
+              <label for="admin-test-duration">Test Duration (minutes)</label>
+              <input type="number" id="admin-test-duration" min="10" max="120" value="30">
+            </div>
+            <div class="input-group">
+              <label for="admin-total-questions">Total Questions</label>
+              <input type="number" id="admin-total-questions" min="10" max="100" value="30">
+            </div>
+            <div class="input-group">
+              <label for="admin-max-attempts">Max Attempts</label>
+              <input type="number" id="admin-max-attempts" min="1" max="10" value="5">
+            </div>
+            <div class="input-group">
+              <label for="admin-passing">Passing Percentage</label>
+              <input type="number" id="admin-passing" min="1" max="100" value="65">
+            </div>
+            <button class="btn" type="submit">Save Config</button>
+          </form>
+        </div>
+        <div class="admin-section">
+          <h3>Question Bank</h3>
+          <form id="admin-question-form">
+            <div class="input-group">
+              <label for="admin-question">Question</label>
+              <input type="text" id="admin-question" required>
+            </div>
+            <div class="input-group">
+              <label>Options</label>
+              <input type="text" id="admin-opt1" placeholder="Option 1" required>
+              <input type="text" id="admin-opt2" placeholder="Option 2" required>
+              <input type="text" id="admin-opt3" placeholder="Option 3" required>
+              <input type="text" id="admin-opt4" placeholder="Option 4" required>
+            </div>
+            <div class="input-group">
+              <label for="admin-answer">Correct Option (1-4)</label>
+              <input type="number" id="admin-answer" min="1" max="4" required>
+            </div>
+            <div class="input-group">
+              <label for="admin-difficulty">Difficulty</label>
+              <select id="admin-difficulty">
+                <option value="easy">Easy</option>
+                <option value="moderate">Moderate</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+            <button class="btn" type="submit">Add Question</button>
+          </form>
+          <div id="admin-question-success" class="success"></div>
+          <table class="table" id="admin-questions-table">
+            <thead>
+              <tr><th>#</th><th>Question</th><th>Difficulty</th><th>Action</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="admin-section">
+          <h3>Results</h3>
+          <table class="table" id="admin-results-table">
+            <thead>
+              <tr><th>Name</th><th>Mobile</th><th>Score</th><th>Status</th><th>Attempts</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="slide-nav">
+          <button class="btn btn-outline" id="btn-admin-logout">Logout</button>
+          <span></span>
+        </div>
+      </div>
+    </div>
+    <!-- Slide 9: Contact -->
+    <div class="slide" id="slide-9">
+      <div class="slide-content center">
+        <h2>Contact Us</h2>
+        <p>Email: <a href="mailto:company@example.com">company@example.com</a></p>
+        <p>Phone: <a href="tel:+919177967080">+91 91779 67080</a></p>
+        <div class="slide-nav">
+          <button class="btn btn-outline" id="back-to-achievements">Back</button>
+          <span></span>
+        </div>
+      </div>
+    </div>
+    <!-- Slide Dots -->
+    <div class="slide-dots" id="slide-dots"></div>
+  </div>
+  <script>
+    // --- Slide Navigation ---
+    const slideCount = 10;
+    let currentSlide = 0;
+    function showSlide(idx, direction) {
+      for (let i = 0; i < slideCount; i++) {
+        const slide = document.getElementById('slide-' + i);
+        slide.classList.remove('active', 'left');
+        if (i === idx) slide.classList.add('active');
+        else if (direction && i < idx) slide.classList.add('left');
+      }
+      currentSlide = idx;
+      updateDots();
+    }
+    // --- Dots ---
+    function updateDots() {
+      const dots = document.getElementById('slide-dots');
+      dots.innerHTML = '';
+      for (let i = 0; i < slideCount; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'dot' + (i === currentSlide ? ' active' : '');
+        dots.appendChild(dot);
+      }
+    }
+    updateDots();
+    // --- Utility Functions ---
+    function $(id) { return document.getElementById(id); }
+    function notify(msg) { alert(msg); }
+    // --- OTP Simulation ---
+    let generatedOTP = '';
+    let applicantMobile = '';
+    let applicantProfile = null;
+    let applicantPhoto = null;
+    let applicantAttempts = 0;
+    let applicantResults = [];
+    let testConfig = {
+      duration: 30, // minutes
+      totalQuestions: 30,
+      maxAttempts: 5,
+      passing: 65
+    };
+    let questionBank = [];
+    let testQuestions = [];
+    let testAnswers = [];
+    let testTimer = null;
+    let testTimeLeft = 0;
+    let testCurrent = 0;
+    let testScore = 0;
+    let testResult = null;
+    // --- Load from localStorage ---
+    function loadData() {
+      testConfig = JSON.parse(localStorage.getItem('testConfig')) || testConfig;
+      questionBank = JSON.parse(localStorage.getItem('questionBank')) || [];
+    }
+    function saveData() {
+      localStorage.setItem('testConfig', JSON.stringify(testConfig));
+      localStorage.setItem('questionBank', JSON.stringify(questionBank));
+    }
+    loadData();
+    // --- Slide 0: Applicant Login ---
+    $('btn-send-otp').onclick = function() {
+      const mobile = $('login-mobile').value.trim();
+      if (!/^\d{10}$/.test(mobile)) {
+        $('login-error').innerText = 'Enter a valid 10-digit mobile number.';
+        return;
+      }
+      applicantMobile = mobile;
+      generatedOTP = (Math.floor(100000 + Math.random()*900000)).toString();
+      alert('Your OTP is: ' + generatedOTP + ' (Simulated)');
+      $('otp-section').classList.remove('hidden');
+      $('login-error').innerText = '';
+    };
+    $('btn-verify-otp').onclick = function() {
+      const otp = $('login-otp').value.trim();
+      if (otp === generatedOTP) {
+        showSlide(1, true);
+        // Load profile if exists
+        const p = JSON.parse(localStorage.getItem('profile-'+applicantMobile));
+        if (p) {
+          $('profile-name').value = p.name;
+          $('profile-email').value = p.email;
+        }
+      } else {
+        $('login-error').innerText = 'Invalid OTP.';
+      }
+    };
+    $('to-admin-login').onclick = function() { showSlide(7, true); };
+    // --- Slide 1: Profile ---
+    $('profile-form').onsubmit = function(e) {
+      e.preventDefault();
+      const name = $('profile-name').value.trim();
+      const email = $('profile-email').value.trim();
+      if (!name || !email) {
+        $('profile-error').innerText = 'Please fill all required fields.';
+        return;
+      }
+      applicantProfile = { name, email, mobile: applicantMobile };
+      localStorage.setItem('profile-'+applicantMobile, JSON.stringify(applicantProfile));
+      const photoFile = $('profile-photo').files[0];
+      if (photoFile) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          applicantPhoto = e.target.result;
+          localStorage.setItem('photo-'+applicantMobile, applicantPhoto);
+        };
+        reader.readAsDataURL(photoFile);
+      } else {
+        applicantPhoto = localStorage.getItem('photo-'+applicantMobile) || null;
+      }
+      showSlide(2, true);
+      $('profile-error').innerText = '';
+    };
+    $('back-to-login').onclick = function() { showSlide(0, false); };
+    // --- Slide 2: Terms ---
+    $('accept-terms').onchange = function() {
+      $('btn-accept-terms').disabled = !this.checked;
+    };
+    $('btn-accept-terms').onclick = function() { showSlide(3, true); startCamera(); };
+    $('back-to-profile').onclick = function() { showSlide(1, false); };
+    // --- Slide 3: Camera ---
+    let cameraStream = null;
+    function startCamera() {
+      const video = $('camera-video');
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          cameraStream = stream;
+          video.srcObject = stream;
+        })
+        .catch(() => {
+          $('camera-error').innerText = 'Camera access denied. Cannot proceed.';
+        });
+    }
+    $('btn-capture-photo').onclick = function() {
+      const video = $('camera-video');
+      const canvas = $('camera-canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      applicantPhoto = canvas.toDataURL('image/png');
+      localStorage.setItem('photo-'+applicantMobile, applicantPhoto);
+      if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+      showSlide(4, true);
+      startTest();
+    };
+    $('back-to-terms').onclick = function() { if (cameraStream) cameraStream.getTracks().forEach(t => t.stop()); showSlide(2, false); };
+    // --- Slide 4: Test ---
+    function startTest() {
+      applicantAttempts = parseInt(localStorage.getItem('attempts-'+applicantMobile) || '0');
+      applicantResults = JSON.parse(localStorage.getItem('results-'+applicantMobile) || '[]');
+      if (applicantAttempts >= testConfig.maxAttempts) {
+        alert('You have reached the maximum number of attempts.');
+        showSlide(6, true);
+        return;
+      }
+      if (questionBank.length < testConfig.totalQuestions) {
+        alert('Not enough questions in the bank. Contact admin.');
+        showSlide(6, true);
+        return;
+      }
+      const easy = questionBank.filter(q => q.difficulty==='easy');
+      const moderate = questionBank.filter(q => q.difficulty==='moderate');
+      const hard = questionBank.filter(q => q.difficulty==='hard');
+      const n = testConfig.totalQuestions;
+      const nEasy = Math.round(n*0.3), nModerate = Math.round(n*0.3), nHard = n-nEasy-nModerate;
+      function pickRandom(arr, n) {
+        const copy = arr.slice();
+        const out = [];
+        while (out.length < n && copy.length) {
+          const idx = Math.floor(Math.random()*copy.length);
+          out.push(copy.splice(idx,1)[0]);
+        }
+        return out;
+      }
+      testQuestions = [
+        ...pickRandom(easy, nEasy),
+        ...pickRandom(moderate, nModerate),
+        ...pickRandom(hard, nHard)
+      ];
+      testQuestions = pickRandom(testQuestions, testQuestions.length);
+      testAnswers = Array(testQuestions.length).fill(null);
+      testCurrent = 0;
+      testScore = 0;
+      testTimeLeft = testConfig.duration * 60;
+      updateTestUI();
+      updateAttemptsUI();
+      testTimer = setInterval(() => {
+        testTimeLeft--;
+        updateTimerUI();
+        if (testTimeLeft <= 0) {
+          clearInterval(testTimer);
+          submitTest();
+        }
+      }, 1000);
+    }
+    function updateTestUI() {
+      updateTimerUI();
+      updateAttemptsUI();
+      const q = testQuestions[testCurrent];
+      $('test-question').innerHTML = `<div class="question"><b>Q${testCurrent+1}:</b> ${q.question} <span class="tag ${q.difficulty}">${q.difficulty}</span></div>`;
+      $('test-options').innerHTML = '';
+      q.options.forEach((opt, i) => {
+        const checked = testAnswers[testCurrent]===i ? 'checked' : '';
+        $('test-options').innerHTML += `<label class="option"><input type="radio" name="option" value="${i}" ${checked}> ${opt}</label>`;
+      });
+      $('btn-next-question').style.display = testCurrent < testQuestions.length-1 ? '' : 'none';
+      $('btn-submit-test').style.display = testCurrent === testQuestions.length-1 ? '' : 'none';
+    }
+    function updateTimerUI() {
+      const min = Math.floor(testTimeLeft/60).toString().padStart(2,'0');
+      const sec = (testTimeLeft%60).toString().padStart(2,'0');
+      $('test-timer').innerText = `${min}:${sec}`;
+    }
+    function updateAttemptsUI() {
+      applicantAttempts = parseInt(localStorage.getItem('attempts-'+applicantMobile) || '0');
+      $('test-attempts').innerText = `Attempt ${applicantAttempts+1} of ${testConfig.maxAttempts}`;
+    }
+    $('test-options').onclick = function(e) {
+      if (e.target.name==='option') {
+        testAnswers[testCurrent] = parseInt(e.target.value);
+      }
+    };
+    $('btn-next-question').onclick = function() {
+      if (testAnswers[testCurrent]===null) {
+        alert('Please select an option.');
+        return;
+      }
+      testCurrent++;
+      updateTestUI();
+    };
+    $('btn-submit-test').onclick = function() {
+      if (testAnswers[testCurrent]===null) {
+        alert('Please select an option.');
+        return;
+      }
+      clearInterval(testTimer);
+      submitTest();
+    };
+    $('back-to-camera').onclick = function() { clearInterval(testTimer); showSlide(3, false); };
+    function submitTest() {
+      let score = 0, correct = 0, wrong = 0;
+      testQuestions.forEach((q, i) => {
+        if (testAnswers[i] === q.answer) {
+          score += 3; correct++;
+        } else if (testAnswers[i] !== null) {
+          score -= 1; wrong++;
+        }
+      });
+      testScore = score;
+      const maxScore = testQuestions.length * 3;
+      const percent = Math.round((score/maxScore)*100);
+      const passed = percent >= testConfig.passing;
+      applicantAttempts++;
+      localStorage.setItem('attempts-'+applicantMobile, applicantAttempts);
+      const result = {
+        name: applicantProfile.name,
+        mobile: applicantMobile,
+        score, percent, correct, wrong, attempts: applicantAttempts, passed,
+        date: new Date().toLocaleString()
+      };
+      applicantResults.push(result);
+      localStorage.setItem('results-'+applicantMobile, JSON.stringify(applicantResults));
+      let adminResults = JSON.parse(localStorage.getItem('adminResults')||'[]');
+      adminResults.push(result);
+      localStorage.setItem('adminResults', JSON.stringify(adminResults));
+      showSlide(5, true);
+      $('result-score').innerText = `Score: ${score} / ${maxScore} (${percent}%)`;
+      $('result-status').innerHTML = passed ? '<span class="success">Passed</span>' : '<span class="error">Failed</span>';
+      let html = '<h4>Correct Answers:</h4><ol>';
+      testQuestions.forEach((q, i) => {
+        const userAns = testAnswers[i];
+        const correctAns = q.answer;
+        html += `<li>${q.question}<br>
+          <span class="tag ${q.difficulty}">${q.difficulty}</span><br>
+          Your answer: <b>${userAns!==null?q.options[userAns]:"Not answered"}</b> <br>
+          Correct answer: <b>${q.options[correctAns]}</b>
+        </li><br>`;
+      });
+      html += '</ol>';
+      $('result-details').innerHTML = html;
+      alert('Result notification sent to applicant and company (simulated).');
+    }
+    $('btn-new-attempt').onclick = function() {
+      if (applicantAttempts >= testConfig.maxAttempts) {
+        alert('You have reached the maximum number of attempts.');
+        showSlide(6, true);
+        return;
+      }
+      showSlide(2, false);
+      $('accept-terms').checked = false;
+      $('btn-accept-terms').disabled = true;
+    };
+    // --- Slide 6: Achievements ---
+    $('btn-contact').onclick = function() { showSlide(9, true); };
+    // --- Slide 7: Admin Login ---
+    const adminMobiles = ['9177967080','9972037182'];
+    let adminLoggedIn = false;
+    let adminOTP = '';
+    $('btn-admin-send-otp').onclick = function() {
+      const mobile = $('admin-mobile').value.trim();
+      if (!adminMobiles.includes(mobile)) {
+        $('admin-login-error').innerText = 'Not an authorized admin number.';
+        return;
+      }
+      adminOTP = (Math.floor(100000 + Math.random()*900000)).toString();
+      alert('Admin OTP: ' + adminOTP + ' (Simulated)');
+      $('admin-otp-section').classList.remove('hidden');
+      $('admin-login-error').innerText = '';
+    };
+    $('btn-admin-verify-otp').onclick = function() {
+      const otp = $('admin-otp').value.trim();
+      if (otp === adminOTP) {
+        adminLoggedIn = true;
+        showSlide(8, true);
+        loadAdminPanel();
+      } else {
+        $('admin-login-error').innerText = 'Invalid OTP.';
+      }
+    };
+    $('back-to-login-from-admin').onclick = function() { showSlide(0, false); };
+    // --- Slide 8: Admin Panel ---
+    $('btn-admin-logout').onclick = function() {
+      adminLoggedIn = false;
+      showSlide(7, false);
+      $('admin-mobile').value = '';
+      $('admin-otp').value = '';
+      $('admin-otp-section').classList.add('hidden');
+    };
+    $('admin-config-form').onsubmit = function(e) {
+      e.preventDefault();
+      testConfig.duration = parseInt($('admin-test-duration').value);
+      testConfig.totalQuestions = parseInt($('admin-total-questions').value);
+      testConfig.maxAttempts = parseInt($('admin-max-attempts').value);
+      testConfig.passing = parseInt($('admin-passing').value);
+      saveData();
+      alert('Test configuration saved.');
+    };
+    $('admin-question-form').onsubmit = function(e) {
+      e.preventDefault();
+      const question = $('admin-question').value.trim();
+      const options = [
+        $('admin-opt1').value.trim(),
+        $('admin-opt2').value.trim(),
+        $('admin-opt3').value.trim(),
+        $('admin-opt4').value.trim()
+      ];
+      const answer = parseInt($('admin-answer').value)-1;
+      const difficulty = $('admin-difficulty').value;
+      if (!question || options.some(o=>!o) || answer<0 || answer>3) {
+        $('admin-question-success').innerText = 'Fill all fields correctly.';
+        return;
+      }
+      questionBank.push({ question, options, answer, difficulty });
+      saveData();
+      $('admin-question-success').innerText = 'Question added!';
+      setTimeout(()=>{$('admin-question-success').innerText='';}, 1500);
+      $('admin-question-form').reset();
+      loadAdminQuestions();
+    };
+    function loadAdminQuestions() {
+      const tbody = $('admin-questions-table').querySelector('tbody');
+      tbody.innerHTML = '';
+      questionBank.forEach((q, i) => {
+        tbody.innerHTML += `<tr><td>${i+1}</td><td>${q.question}</td><td><span class="tag ${q.difficulty}">${q.difficulty}</span></td><td><button class="btn btn-outline" onclick="deleteQuestion(${i})">Delete</button></td></tr>`;
+      });
+    }
+    window.deleteQuestion = function(idx) {
+      if (confirm('Delete this question?')) {
+        questionBank.splice(idx,1);
+        saveData();
+        loadAdminQuestions();
+      }
+    }
+    function loadAdminPanel() {
+      $('admin-test-duration').value = testConfig.duration;
+      $('admin-total-questions').value = testConfig.totalQuestions;
+      $('admin-max-attempts').value = testConfig.maxAttempts;
+      $('admin-passing').value = testConfig.passing;
+      loadAdminQuestions();
+      const tbody = $('admin-results-table').querySelector('tbody');
+      const results = JSON.parse(localStorage.getItem('adminResults')||'[]');
+      tbody.innerHTML = '';
+      results.slice(-100).reverse().forEach(r => {
+        tbody.innerHTML += `<tr><td>${r.name}</td><td>${r.mobile}</td><td>${r.score}</td><td>${r.passed?'<span class='success'>Passed</span>':'<span class='error'>Failed</span>'}</td><td>${r.attempts}</td></tr>`;
+      });
+    }
+    // --- Slide 9: Contact ---
+    $('back-to-achievements').onclick = function() { showSlide(6, false); };
+    // --- Initial ---
+    showSlide(0);
+  </script>
+</body>
+</html> 
